@@ -1,46 +1,270 @@
-<!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="apple-mobile-web-app-capable" content="yes"><title>더치페이 계산기</title>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="더치페이">
+<meta name="theme-color" content="#E7ECF3">
+<title>더치페이 계산기</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f3f5f7;color:#17202a;margin:0;padding:16px}main{max-width:560px;margin:auto}h1{font-size:26px}.card{background:white;border-radius:16px;padding:18px;margin:14px 0}button,input,select{font:inherit;padding:12px;border:1px solid #ccd3da;border-radius:10px;width:100%;box-sizing:border-box;background:white}button{font-weight:700;cursor:pointer}.tabs,.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.active,.primary{background:#1e3a5f;color:white}.hidden{display:none}label{display:block;font-size:14px;font-weight:700;margin:14px 0 6px}.muted{color:#637080;font-size:14px;line-height:1.5}.result{background:#edf4fb;border-radius:12px;padding:14px;margin-top:14px}.big{font-size:28px;font-weight:800;margin:8px 0}.line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #d9e4ef}.line:last-child{border:0}.error{color:#b42318;font-size:14px}.example{font-size:14px;background:#f5f6f8;border-radius:10px;padding:10px;line-height:1.5}
-</style></head><body><main>
-<h1>더치페이 계산기</h1><p class="muted">독립 실행형 HTML 파일입니다. 인터넷 연결 없이 계산할 수 있습니다.</p>
-<div class="tabs"><button id="eqtab" class="active">균등 나누기</button><button id="sptab">금액 다르게 내기</button></div>
-<section class="card">
-<label for="total">총 금액 (원)</label><input id="total" type="number" min="0" step="1" value="125000" inputmode="numeric">
-<div id="eq">
-<label for="people">전체 인원 (명)</label><input id="people" type="number" min="1" step="1" value="5" inputmode="numeric">
-<label for="rounding">반올림 단위</label><select id="rounding"><option value="1">정확히 계산 (1원 단위)</option><option value="100">100원 단위</option><option value="1000">1,000원 단위</option><option value="10000">10,000원 단위</option></select>
-</div>
-<div id="sp" class="hidden">
-<div class="grid"><div><label for="count">다른 금액을 낼 인원</label><input id="count" type="number" min="1" step="1" value="2" inputmode="numeric"></div><div><label for="amount">그 인원의 1인 금액 (원)</label><input id="amount" type="number" min="0" step="1" value="30000" inputmode="numeric"></div></div>
-<label for="sppeople">전체 인원 (명)</label><input id="sppeople" type="number" min="2" step="1" value="6" inputmode="numeric">
-<p class="example">예: 총 150,000원, 6명 중 2명이 각 30,000원을 내면 나머지 4명이 남은 90,000원을 나눠 냅니다.</p>
-</div>
-<button id="calc" class="primary" style="margin-top:18px">계산하기</button><p id="error" class="error"></p><div id="result" class="result" aria-live="polite"></div>
-</section><p class="muted">나누어떨어지지 않으면 필요한 사람에게 1원씩 더해 총액이 정확히 맞도록 표시합니다. 반올림 모드는 반올림 후 총액과의 차이도 보여줍니다.</p>
+:root{
+  --bg:#E7ECF3; --paper:#FFFFFF; --ink:#1C2333; --sub:#667089; --line:#D5DBE6;
+  --accent:#2B3A8C; --mark:#FFE066; --warn:#C0392B; --field:#F3F5F9;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121722; --paper:#1D2433; --ink:#E9EDF5; --sub:#9AA3B8; --line:#2E3850;
+    --accent:#9FB0FF; --mark:#6B5A12; --warn:#FF7A6B; --field:#262E40;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121722; --paper:#1D2433; --ink:#E9EDF5; --sub:#9AA3B8; --line:#2E3850;
+  --accent:#9FB0FF; --mark:#6B5A12; --warn:#FF7A6B; --field:#262E40;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-size:16px; line-height:1.5; -webkit-text-size-adjust:100%;
+}
+main{max-width:440px; margin:0 auto; padding:20px 16px 40px}
+h1{font-size:22px; font-weight:700; margin:8px 4px 16px; letter-spacing:-.02em}
+.receipt{
+  background:var(--paper); padding:20px 18px 28px; position:relative;
+  border-radius:14px 14px 0 0;
+}
+.receipt::after{
+  content:""; position:absolute; left:0; right:0; bottom:-10px; height:10px;
+  background:
+    linear-gradient(-45deg,transparent 7px,var(--paper) 0) 0 0/14px 10px repeat-x,
+    linear-gradient(45deg,transparent 7px,var(--paper) 0) 0 0/14px 10px repeat-x;
+}
+label.k{display:block; font-size:14px; color:var(--sub); margin:0 0 6px}
+.row{margin-bottom:18px}
+.money{
+  display:flex; align-items:baseline; gap:6px; background:var(--field);
+  border-radius:10px; padding:10px 14px;
+}
+.money input{
+  flex:1; min-width:0; border:0; background:transparent; color:var(--ink);
+  font:inherit; font-size:28px; font-weight:700; outline:none; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.money span{color:var(--sub)}
+.money:focus-within{box-shadow:0 0 0 2px var(--accent)}
+.stepper{display:flex; align-items:center; gap:10px}
+.stepper button{
+  width:48px; height:48px; border-radius:50%; border:1.5px solid var(--line);
+  background:var(--paper); color:var(--ink); font-size:24px; line-height:1; cursor:pointer;
+}
+.stepper button:active{background:var(--field)}
+.stepper output{font-size:28px; font-weight:700; min-width:64px; text-align:center}
+.seg{display:flex; background:var(--field); border-radius:10px; padding:4px}
+.seg button{
+  flex:1; border:0; background:transparent; color:var(--sub); font:inherit; font-size:15px;
+  padding:8px 0; border-radius:7px; cursor:pointer;
+}
+.seg button[aria-pressed="true"]{background:var(--paper); color:var(--ink); font-weight:700}
+hr{border:0; border-top:1.5px dashed var(--line); margin:22px 0}
+.ex{display:grid; grid-template-columns:1fr 1.3fr 40px; gap:8px; margin-bottom:8px}
+.ex input{
+  width:100%; border:0; background:var(--field); color:var(--ink); border-radius:10px;
+  padding:12px; font:inherit; font-size:16px; outline:none;
+}
+.ex input:focus{box-shadow:0 0 0 2px var(--accent)}
+.ex .del{
+  border:0; background:transparent; color:var(--sub); font-size:22px; cursor:pointer; border-radius:10px;
+}
+.add{
+  width:100%; border:1.5px dashed var(--line); background:transparent; color:var(--accent);
+  font:inherit; font-size:15px; font-weight:500; padding:11px; border-radius:10px; cursor:pointer;
+}
+.hint{font-size:13px; color:var(--sub); margin:6px 0 0}
+.result{margin-top:34px; padding:0 4px}
+.big{font-size:15px; color:var(--sub)}
+.big strong{
+  display:block; font-size:44px; color:var(--ink); letter-spacing:-.03em; line-height:1.15;
+  font-variant-numeric:tabular-nums;
+}
+.big strong mark{background:linear-gradient(transparent 60%,var(--mark) 60%); color:inherit; padding:0 2px}
+.lines{margin:18px 0 0; padding:0; list-style:none; font-variant-numeric:tabular-nums}
+.lines li{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line)}
+.lines li:last-child{border-bottom:0}
+.lines .s{color:var(--sub)}
+.err{color:var(--warn); font-weight:500; margin-top:14px}
+.copy{
+  margin-top:20px; width:100%; border:0; border-radius:12px; background:var(--accent);
+  color:var(--paper); font:inherit; font-size:17px; font-weight:700; padding:15px; cursor:pointer;
+}
+.copy:disabled{opacity:.4}
+.reset{display:block; margin:14px auto 0; background:none; border:0; color:var(--sub); font:inherit; font-size:14px; text-decoration:underline; cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+  <h1>더치페이 계산기</h1>
+
+  <section class="receipt">
+    <div class="row">
+      <label class="k" for="total">총 금액</label>
+      <div class="money"><input id="total" inputmode="numeric" autocomplete="off" placeholder="0"><span>원</span></div>
+    </div>
+
+    <div class="row">
+      <label class="k">전체 인원</label>
+      <div class="stepper">
+        <button type="button" id="minus" aria-label="한 명 빼기">−</button>
+        <output id="count">2</output>
+        <button type="button" id="plus" aria-label="한 명 더하기">+</button>
+        <span style="color:var(--sub)">명</span>
+      </div>
+    </div>
+
+    <div class="row" style="margin-bottom:0">
+      <label class="k">1인 금액 올림 단위</label>
+      <div class="seg" id="unit">
+        <button type="button" data-u="1">1원</button>
+        <button type="button" data-u="10">10원</button>
+        <button type="button" data-u="100">100원</button>
+        <button type="button" data-u="1000">1,000원</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <label class="k">금액을 따로 정한 사람</label>
+    <div id="exList"></div>
+    <button type="button" class="add" id="addEx">+ 따로 내는 사람 추가</button>
+    <p class="hint">정한 금액을 먼저 빼고, 남은 금액을 나머지 인원이 나눕니다.</p>
+  </section>
+
+  <section class="result" aria-live="polite">
+    <div class="big" id="bigLabel">1인당<strong><mark id="per">0</mark>원</strong></div>
+    <ul class="lines" id="lines"></ul>
+    <div class="err" id="err" hidden></div>
+    <button type="button" class="copy" id="copy">카톡용 결과 복사</button>
+    <button type="button" class="reset" id="reset">처음부터 다시</button>
+  </section>
 </main>
+
 <script>
-const $=id=>document.getElementById(id), won=n=>Math.round(n).toLocaleString('ko-KR')+'원';let mode='eq';
-function line(a,b){return '<div class="line"><span>'+a+'</span><strong>'+b+'</strong></div>'}
-function fail(s){$('error').textContent=s;$('result').innerHTML=''}
-function modeSet(m){mode=m;$('eq').classList.toggle('hidden',m!=='eq');$('sp').classList.toggle('hidden',m!=='sp');$('eqtab').classList.toggle('active',m==='eq');$('sptab').classList.toggle('active',m==='sp');calc()}
+const $ = s => document.querySelector(s);
+const fmt = n => n.toLocaleString('ko-KR');
+const num = s => parseInt(String(s).replace(/[^\d]/g,''),10) || 0;
+
+let state = { total:0, count:2, unit:100, ex:[] };
+try{ const s = localStorage.getItem('dutchpay'); if(s) state = Object.assign(state, JSON.parse(s)); }catch(e){}
+const save = () => { try{ localStorage.setItem('dutchpay', JSON.stringify(state)); }catch(e){} };
+
+function bindMoney(input, get, set){
+  input.value = get() ? fmt(get()) : '';
+  input.addEventListener('input', () => {
+    const v = num(input.value);
+    set(v);
+    input.value = v ? fmt(v) : '';
+    calc();
+  });
+}
+
+function renderEx(){
+  const box = $('#exList'); box.innerHTML = '';
+  state.ex.forEach((p, i) => {
+    const row = document.createElement('div'); row.className = 'ex';
+    const name = document.createElement('input');
+    name.placeholder = '이름'; name.value = p.name || ''; name.setAttribute('aria-label','이름');
+    name.addEventListener('input', () => { p.name = name.value; calc(); });
+    const amt = document.createElement('input');
+    amt.inputMode = 'numeric'; amt.placeholder = '낼 금액'; amt.setAttribute('aria-label','낼 금액');
+    bindMoney(amt, () => p.amount, v => p.amount = v);
+    const del = document.createElement('button');
+    del.type = 'button'; del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label','삭제');
+    del.addEventListener('click', () => { state.ex.splice(i,1); renderEx(); calc(); });
+    row.append(name, amt, del); box.append(row);
+  });
+}
+
 function calc(){
-$('error').textContent='';let total=Number($('total').value);
-if(!Number.isSafeInteger(total)||total<0)return fail('총 금액은 0원 이상의 정수로 입력해 주세요.');
-if(mode==='eq'){
-let p=Number($('people').value),u=Number($('rounding').value);
-if(!Number.isInteger(p)||p<1)return fail('전체 인원은 1명 이상의 정수로 입력해 주세요.');
-if(u===1){let base=Math.floor(total/p),extra=total%p;$('result').innerHTML='<b>계산 결과</b><div class="big">'+won(base)+(extra?'부터':'')+'</div>'+line('전체 인원',p+'명')+line('기본 금액',won(base)+'씩')+line('1원 추가 부담',extra?extra+'명이 '+won(base+1)+'씩':'없음')+line('총액 확인',won(total))}
-else{let each=Math.round((total/p)/u)*u,sum=each*p,diff=sum-total;$('result').innerHTML='<b>반올림 계산 결과</b><div class="big">'+won(each)+'</div>'+line('1인 금액',won(each)+'씩')+line('인원',p+'명')+line('나눠 낸 합계',won(sum))+line('총액과의 차이',diff===0?'차이 없음':(diff>0?'초과 ':'부족 ')+won(Math.abs(diff)))}
-}else{
-let c=Number($('count').value),a=Number($('amount').value),p=Number($('sppeople').value);
-if(!Number.isInteger(p)||p<2)return fail('전체 인원은 2명 이상으로 입력해 주세요.');
-if(!Number.isInteger(c)||c<1||c>=p)return fail('다른 금액을 낼 인원은 1명 이상이며 전체 인원보다 적어야 합니다.');
-if(!Number.isSafeInteger(a)||a<0)return fail('1인 금액은 0원 이상의 정수로 입력해 주세요.');
-let fixed=c*a;if(!Number.isSafeInteger(fixed)||fixed>total)return fail('다른 금액을 내는 사람들의 합계가 총 금액을 넘습니다.');
-let restp=p-c,rest=total-fixed,base=Math.floor(rest/restp),extra=rest%restp;
-$('result').innerHTML='<b>계산 결과</b>'+line('다른 금액을 내는 사람',c+'명 × '+won(a))+line('해당 인원 합계',won(fixed))+line('나머지 인원',restp+'명')+line('나머지 인원 기본 금액',won(base)+'씩')+line('1원 추가 부담',extra?extra+'명이 '+won(base+1)+'씩':'없음')+line('총액 확인',won(total))
-}}
-$('eqtab').onclick=()=>modeSet('eq');$('sptab').onclick=()=>modeSet('sp');$('calc').onclick=calc;
-['total','people','rounding','count','amount','sppeople'].forEach(id=>$(id).addEventListener('input',calc));modeSet('eq');
-</script></body></html>
+  $('#count').textContent = state.count;
+  document.querySelectorAll('#unit button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.u === state.unit));
+
+  const err = $('#err'), lines = $('#lines');
+  const exSum = state.ex.reduce((a,p) => a + (p.amount||0), 0);
+  const restN = state.count - state.ex.length;
+  const rest = state.total - exSum;
+  let msg = '';
+  if(state.ex.length && restN < 1) msg = '따로 내는 사람이 전체 인원보다 많거나 같아요. 인원을 늘려주세요.';
+  else if(rest < 0) msg = `따로 정한 금액(${fmt(exSum)}원)이 총 금액보다 커요.`;
+
+  err.hidden = !msg; err.textContent = msg;
+  $('#copy').disabled = !!msg || !state.total;
+  lines.innerHTML = '';
+  if(msg){ $('#per').textContent = '–'; save(); return null; }
+
+  const raw = restN ? rest / restN : 0;
+  const per = Math.ceil(raw / state.unit) * state.unit;
+  const collected = per * restN + exSum;
+  const surplus = collected - state.total;
+
+  $('#per').textContent = fmt(per);
+  $('#bigLabel').firstChild.nodeValue = state.ex.length ? `나머지 ${restN}명 1인당` : '1인당';
+
+  const add = (l, r, sub) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="${sub?'s':''}"></span><span class="${sub?'s':''}"></span>`;
+    li.children[0].textContent = l; li.children[1].textContent = r; lines.append(li);
+  };
+  state.ex.forEach((p,i) => add(p.name || `따로 내는 사람 ${i+1}`, fmt(p.amount||0)+'원'));
+  if(state.ex.length) add(`나머지 ${restN}명`, `각 ${fmt(per)}원`);
+  add('걷히는 돈', fmt(collected)+'원', true);
+  if(surplus > 0) add('올림으로 남는 돈', fmt(surplus)+'원', true);
+
+  save();
+  return { per, restN, surplus, collected };
+}
+
+$('#minus').onclick = () => { if(state.count > 1){ state.count--; calc(); } };
+$('#plus').onclick = () => { if(state.count < 99){ state.count++; calc(); } };
+document.querySelectorAll('#unit button').forEach(b => b.onclick = () => { state.unit = +b.dataset.u; calc(); });
+$('#addEx').onclick = () => {
+  state.ex.push({ name:'', amount:0 });
+  if(state.ex.length >= state.count) state.count = state.ex.length + 1;
+  renderEx(); calc();
+  const inputs = document.querySelectorAll('#exList input'); inputs[inputs.length-2]?.focus();
+};
+$('#reset').onclick = () => {
+  state = { total:0, count:2, unit:100, ex:[] };
+  $('#total').value = ''; renderEx(); calc();
+};
+$('#copy').onclick = async () => {
+  const r = calc(); if(!r) return;
+  let t = `💸 더치페이\n총 ${fmt(state.total)}원 / ${state.count}명\n`;
+  state.ex.forEach((p,i) => t += `· ${p.name || '따로 내는 사람 '+(i+1)}: ${fmt(p.amount||0)}원\n`);
+  t += state.ex.length ? `· 나머지 ${r.restN}명: 각 ${fmt(r.per)}원` : `· 1인당 ${fmt(r.per)}원`;
+  if(r.surplus > 0) t += `\n(올림으로 ${fmt(r.surplus)}원 남음)`;
+  const btn = $('#copy');
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = t; document.body.append(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(_){} ta.remove();
+  }
+  btn.textContent = '복사됨'; setTimeout(() => btn.textContent = '카톡용 결과 복사', 1500);
+};
+
+bindMoney($('#total'), () => state.total, v => state.total = v);
+renderEx(); calc();
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
